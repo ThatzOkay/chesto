@@ -7,6 +7,10 @@
 #include <coreinit/foreground.h>
 #include <proc_ui/procui.h>
 #include <sysapp/launch.h>
+#include <whb/log.h>
+#include <whb/log_console.h>
+#include <whb/log_udp.h>
+#include <whb/log_cafe.h>
 #elif defined(_3DS)
 #define PLATFORM "3DS"
 #else
@@ -195,8 +199,9 @@ int RootDisplay::mainLoop()
 	// stdout = stderr; // for yuzu
 
 #if defined(__WIIU__)
-	// WHBLogUdpInit();
-	// WHBLogCafeInit();
+	WHBLogUdpInit();
+	WHBLogCafeInit();
+   	WHBLogConsoleInit();
 #endif
 
 	DownloadQueue::init();
