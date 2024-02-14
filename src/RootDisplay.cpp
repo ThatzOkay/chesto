@@ -9,6 +9,9 @@
 #include <sysapp/launch.h>
 #elif defined(_3DS)
 #define PLATFORM "3DS"
+#elif defined(__VITA__)
+#define PLATFORM "Vita"
+#include <psp2/kernel/clib.h>
 #else
 #define PLATFORM "Console"
 #endif
@@ -26,7 +29,7 @@ CST_Window* RootDisplay::window = NULL;
 Element* RootDisplay::subscreen = NULL;
 Element* RootDisplay::nextsubscreen = NULL;
 RootDisplay* RootDisplay::mainDisplay = NULL;
-bool RootDisplay::isDebug = false;
+bool RootDisplay::isDebug = true;
 
 int RootDisplay::screenWidth = 1280;
 int RootDisplay::screenHeight = 720;
@@ -62,6 +65,9 @@ RootDisplay::RootDisplay()
 	this->backgroundColor = fromRGB(30, 30, 30);
 #elif defined(SWITCH)
 	this->backgroundColor = fromRGB(0xd6, 0x0 + 0x20, 0x12 + 0x20);
+#elif defined(__VITA__)
+	sceClibPrintf("Vita background color\n");
+	this->backgroundColor = fromRGB(0x87, 0xce, 0xeb);
 #else
 	this->backgroundColor = fromRGB(0x2d, 0x26, 0x49);
 #endif
@@ -71,6 +77,9 @@ RootDisplay::RootDisplay()
 	setScreenResolution(1280, 720);
 #elif defined(_3DS) || defined(_3DS_MOCK)
 	setScreenResolution(400, 480); // 3ds has a special resolution!
+#elif defined(__VITA__)
+	sceClibPrintf("Vita resolution\n");
+	setScreenResolution(960, 544); // vita has a special resolution!
 #else
 	setScreenResolution(840, 640);
 #endif
@@ -197,6 +206,7 @@ int RootDisplay::mainLoop()
 #if defined(__WIIU__)
 	// WHBLogUdpInit();
 	// WHBLogCafeInit();
+#elif defined(__VITA__)
 #endif
 
 	DownloadQueue::init();

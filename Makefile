@@ -33,7 +33,7 @@ ifeq (,$(MAKECMDGOALS))
 all:
 	@echo "This is a Chesto app! For more information see: https://github.com/fortheusers/chesto"
 	@echo "No targets were specified, try:\n\tmake <target>"
-	@echo "Where <target> is one of: pc, pc-sdl1, wiiu, switch, 3ds, wii"
+	@echo "Where <target> is one of: pc, pc-sdl1, wiiu, switch, 3ds, wii, vita"
 endif
 
 # common variables that all the makefiles will need, and can be appended to by the toplevel
@@ -42,13 +42,13 @@ SOURCES   += libs/chesto/src
 INCLUDES  += libs/chesto/src
 
 # for resin platform (non-PC), include some needed vars
-ifeq (,$(findstring pc,$(MAKECMDGOALS)))
+ifeq (,$(filter pc vita,$(MAKECMDGOALS)))
 SOURCES   += libs/chesto/libs/resinfs/source
 INCLUDES  += libs/chesto/libs/resinfs/include
 endif
 
-# for sdl2 platforms (wiiu or pc or switch targets) use sdl font cache
-ifeq ($(filter-out wiiu pc switch,$(MAKECMDGOALS)),)
+# for sdl2 platforms (wiiu or pc or switch or vita targets) use sdl font cache
+ifeq ($(filter-out wiiu pc switch vita,$(MAKECMDGOALS)),)
 SOURCES += $(CHESTO_DIR)/libs/SDL_FontCache
 VPATH   += $(CHESTO_DIR)/libs/SDL_FontCache
 endif
@@ -70,10 +70,13 @@ DEVKITARM ?= $(DEVKITPRO)/devkitARM
 DEVKITPPC ?= $(DEVKITPRO)/devkitPPC
 DEVKITA64 ?= $(DEVKITPRO)/devkitA64
 
+# Vita SDK 
+VITASDK ?= /usr/local/vitasdk
+
 # export our variables out to our other scripts
 export APP_AUTHOR APP_TITLE ICON_JPG ICON_PNG APP_VERSION BINARY APP_NAME
 export CFLAGS CXXFLAGS ASFLAGS RAMFS_DIR INCLUDES SOURCES HELPERS
-export CHESTO_DIR DEVKITPRO DEVKITARM DEVKITPPC DEVKITA64 OFILES
+export CHESTO_DIR DEVKITPRO DEVKITARM DEVKITPPC DEVKITA64 OFILES VITASDK
 
 # some makefile globals
 export VPATH	+=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
@@ -101,6 +104,10 @@ endif
 
 ifeq (wiiu,$(MAKECMDGOALS))
 include $(HELPERS)/Makefile.wiiu
+endif
+
+ifeq (vita,$(MAKECMDGOALS))
+include $(HELPERS)/Makefile.vita
 endif
 
 ifeq (switch,$(MAKECMDGOALS))

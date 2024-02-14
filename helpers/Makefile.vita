@@ -1,0 +1,80 @@
+include $(HELPERS)/Makefile.sdl2
+
+rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+CC := arm-vita-eabi-gcc
+CXX := arm-vita-eabi-g++
+STRIP := arm-vita-eabi-strip
+
+LIBSDIR := $(VITASDK)/arm-vita-eabi/lib
+INCLUDES := -I$(VITASDK)/arm-vita-eabi/include/
+
+CFLAGS += $(INCLUDES) -D__VITA__ 
+
+CXXFLAGS += -std=c++11
+
+LIBS +=  -lvorbisfile -lvorbis -lopusfile -lopus  -lSceGxm_stub -lSceDisplay_stub -lSceCtrl_stub -lSceAppMgr_stub -lSceAppUtil_stub -lSceAudio_stub -lSceAudioIn_stub -lSceSysmodule_stub -lSceIofilemgr_stub -lSceCommonDialog_stub -lSceTouch_stub -lSceHid_stub -lSceMotion_stub -lScePower_stub -lSceProcessmgr_stub -lm -lmodplug -logg -lxmp -lrestclient-cpp
+
+BUILD := build_vita
+LIBDIRS += $(LIBSDIR)F
+
+export LD	:=	$(CXX)
+
+#-------------------------------------------------------------------------------
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+#-------------------------------------------------------------------------------
+
+export OUTPUT	:=	$(CURDIR)/$(BINARY)_vita
+
+.PHONY: $(BUILD) clean all vita
+
+#-------------------------------------------------------------------------------
+vita: $(BUILD)
+
+#---------------------------------------------------------------------------------
+clean:
+	@echo clean ...
+	@rm -fr $(BUILD) $(PWD)/$(BINARY).vpk eboot.bin $(PWD)/$(BINARY).elf $(PWD)/$(BINARY).velf
+	@find . -name "*.o" -exec rm {} \;
+
+#---------------------------------------------------------------------------------
+
+$(BUILD): eboot.bin param.sfo
+	vita-pack-vpk -s param.sfo -b eboot.bin \
+		--add sce_sys/icon0.png=sce_sys/icon0.png \
+		--add sce_sys/livearea/contents/bg.png=sce_sys/livearea/contents/bg.png \
+		--add sce_sys/livearea/contents/startup.png=sce_sys/livearea/contents/startup.png \
+		--add sce_sys/livearea/contents/template.xml=sce_sys/livearea/contents/template.xml \
+		--add resin/res=resin/res \
+	$(PWD)/$(BINARY).vpk
+
+eboot.bin: $(PWD)/$(BINARY).velf
+	vita-make-fself $(PWD)/$(BINARY).velf eboot.bin
+
+param.sfo:
+	vita-mksfoex -s TITLE_ID="$(PROJECT_TITLEID)" "$(PROJECT_TITLE)" param.sfo
+
+$(PWD)/$(BINARY).velf: $(PWD)/$(BINARY).elf
+	$(STRIP) -g $<
+	vita-elf-create $< $@
+
+$(PWD)/$(BINARY).elf: $(OFILES)
+	@echo "Linking $@"  
+	$(CXX) -Wl,-q -o $@ $^ $(VITASDK)/arm-vita-eabi/lib/libSDL2.a $(LIBS)
+
+$(OBJ_DIRS):
+	@echo "Creating directories"
+	@[ -d $@ ] || mkdir -p $@
+
+out/%.o : src/%.cpp | $(OBJ_DIRS)
+	@echo "Compiling $<"
+	arm-vita-eabi-g++ -c $(CXXFLAGS) -o $@ $<
+
+out/%.o : src/%.c | $(OBJ_DIRS)
+	@echo "Compiling $<"
+	arm-vita-eabi-g++ -c -o $@ $<
+
+#-------------------------------------------------------------------------------
+endif
+#------------------------------------------------------------------------------- 
+
