@@ -164,14 +164,17 @@ void Texture::render(Element* parent)
 		rect.y += (height - rect.h) / 2;
 	}
 
-	if (angle!=0)
-	{
+	if (angle != 0) {
 		// render the texture with a rotation
 		CST_SetQualityHint("best");
 		CST_RenderCopyRotate(renderer, mTexture, NULL, &rect, this->angle);
 	}
-	else
-	{
+	else if (useColorMask) {
+		// render the texture with a mask color (only can darken the texture)
+		SDL_SetTextureColorMod(mTexture, maskColor.r, maskColor.g, maskColor.b);
+		CST_RenderCopy(renderer, mTexture, NULL, &rect);
+		SDL_SetTextureColorMod(mTexture, 0xFF, 0xFF, 0xFF);
+	} else	{
 		// render the texture normally
 		CST_RenderCopy(renderer, mTexture, NULL, &rect);
 	}
@@ -236,4 +239,7 @@ void Texture::loadPath(std::string& path, bool forceReload) {
 		loadFromSurfaceSaveToCache(path, surface);
 		CST_FreeSurface(surface);
 	}
+
+	width = texW;
+	height = texH;
 }
